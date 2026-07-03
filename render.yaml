@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: yahoo-mail-mcp
+    runtime: python
+    plan: free
+    buildCommand: pip install uv && uv sync --no-dev
+    startCommand: uv run python server.py
+    healthCheckPath: /health
+    envVars:
+      - key: YAHOO_USERNAME
+        sync: false
+      - key: YAHOO_APP_PASSWORD
+        sync: false
