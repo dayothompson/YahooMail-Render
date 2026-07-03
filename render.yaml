@@ -3,7 +3,7 @@ services:
     name: yahoo-mail-mcp
     runtime: python
     plan: free
-    buildCommand: pip install uv && uv sync --no-dev
+    buildCommand: pip install uv && uv sync --no-dev --no-install-project
     startCommand: uv run python server.py
     healthCheckPath: /health
     envVars:
