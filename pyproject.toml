@@ -14,8 +14,6 @@ dependencies = [
     "python-dateutil>=2.8",
     "python-dotenv>=1.0",
     "mcp[cli]>=1.0",
-    "uvicorn>=0.30",
-    "starlette>=0.40",
 ]
 
 [tool.hatch.build.targets.wheel]
