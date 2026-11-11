@@ -6,6 +6,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from .auth import AppPasswordCredentials
 from .client import YahooMailClient
@@ -13,7 +14,39 @@ from .models import CalendarEvent
 
 load_dotenv()
 
-mcp = FastMCP("Yahoo Mail", host="0.0.0.0")
+
+def _transport_security() -> TransportSecuritySettings:
+    """Allow the service's own public hostnames, reject everything else.
+
+    DNS rebinding protection validates the Host and Origin headers. Render sets
+    RENDER_EXTERNAL_HOSTNAME automatically for web services; MCP_ALLOWED_HOSTS is
+    an optional comma-separated list for custom domains.
+    """
+    external = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    extra = [h.strip() for h in os.environ.get("MCP_ALLOWED_HOSTS", "").split(",") if h.strip()]
+    public = ([external] if external else []) + extra
+
+    if os.environ.get("RENDER") and not public:
+        # Deployed, but the public hostname is unknown. Validating Host here would
+        # reject every request proxied to us with 421, so leave validation off.
+        return TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+    allowed_hosts = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
+    allowed_origins = ["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*"]
+    for host in public:
+        allowed_hosts += [host, f"{host}:*"]
+        allowed_origins += [f"https://{host}", f"https://{host}:*"]
+
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=allowed_hosts,
+        allowed_origins=allowed_origins,
+    )
+
+
+# host="0.0.0.0" is not a bind address here (server.py binds via uvicorn); it keeps
+# FastMCP from installing its own localhost-only defaults over the settings above.
+mcp = FastMCP("Yahoo Mail", host="0.0.0.0", transport_security=_transport_security())
 
 
 def _get_client() -> YahooMailClient:
