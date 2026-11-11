@@ -13,7 +13,7 @@ from .models import CalendarEvent
 
 load_dotenv()
 
-mcp = FastMCP("Yahoo Mail", host="0.0.0.0")
+mcp = FastMCP("Yahoo Mail")
 
 
 def _get_client() -> YahooMailClient:
